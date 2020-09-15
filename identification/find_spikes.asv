@@ -1,0 +1,26 @@
+function da = find_spikes(c)
+    y = diff(c(:,2));
+    sg = sign(y(1));
+    y_spikes = [];
+    for i = 1:length(y)
+        if sg ~= sign(y(i))
+            y_spikes = [y_spikes; c(i-1,:)];
+        end
+        sg = sign(y(i));
+    end
+        
+    u = diff(c(:,1));
+    sg = sign(u(1));
+    u_spikes = [];
+    for i = 1:length(u)
+        if sg ~= sign(u(i))
+            u_spikes = [u_spikes; c(i-1,:)];
+        end
+        sg = sign(u(i));
+    end
+    
+    
+    A_y = diff(y_spikes(:,2));
+    A_u = diff(u_spikes(:,1));
+    da = A_y/A_u;
+    end
