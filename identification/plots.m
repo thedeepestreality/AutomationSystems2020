@@ -1,7 +1,17 @@
 time = InOutData.time;
 data = InOutData.signals.values;
-y = data(:,1);
-u = data(:,2);
+u = data(:,1);
+y = data(:,2);
+w = data(:,3);
+sz = length(u);
+w0 = 1;
+% w = w-1;
+w(1) = w0;
+dw = diff(w)';
+spikes = find(dw > 0);
+blocks = diff([0,spikes,sz]);
+cc = mat2cell([u y],blocks);
+[fr,phr] = cellfun(@freq_resp,cc);
 
 close all;
 figure(1);
