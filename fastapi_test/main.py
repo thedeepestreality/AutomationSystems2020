@@ -22,18 +22,35 @@ async def read_root():
 @app.get("/items/{item_id}")
 def read_item(item_id: int, q: str = None):
     return {"item_id": item_id, "q": q}
+
+async def handle_echo(reader, writer):
+    data = await reader.read(100)
+    message = data.decode()
+    addr = writer.get_extra_info('peername')
+    print("Received %r from %r" % (message, addr))
+
+    print("Send: %r" % message)
+    writer.write(data)
+    await writer.drain()
+
+    print("Close the client socket")
+    writer.close()
     
 config = Config()
 q = asyncio.Queue()
 loop = asyncio.get_event_loop()
 loop.create_task(serve(app, config)) # run fastapi
 loop.create_task(print_test(q))
+coro = asyncio.start_server(handle_echo, '127.0.0.1', 8888, loop=loop)
+server = loop.run_until_complete(coro)
 
 try:
     loop.run_forever()
 except KeyboardInterrupt:
     pass
 
+server.close()
+loop.run_until_complete(server.wait_closed())
 loop.close()
     
 # @app.on_event("startup")
