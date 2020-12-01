@@ -1,36 +1,49 @@
-import sys
 import asyncio
 import aioserial
 
-async def read_and_print(aioserial_instance: aioserial.AioSerial):
+async def socket_reader(reader, to_serial):
     while True:
-        print((await aioserial_instance.read_async(2)).decode(errors='ignore'), end='\n', flush=True)
+        data = await reader.readline()
+        msg = f'Socket: {data.decode()}'
+        print(msg)
+        await to_serial.put(data)
 
-async def print_from_stdin(q, ser):
+async def socket_writer(writer: asyncio.StreamWriter, from_serial):
     while True:
-        fut = asyncio.ensure_future(q.get())
-        await fut
-        str = fut.result()
-        print("got: " + str)
-        await ser.write_async(bytearray(str,'utf-8'))
+        data = await from_serial.get()
+        writer.write(data)
+        await writer.drain()
 
-def read_stdin(q):
-    asyncio.ensure_future(q.put(sys.stdin.readline()))
+async def serial_reader(aio_port: aioserial.AioSerial, from_serial):
+    while True:
+        data = await aio_port.readline_async()
+        msg = f'Serial: {data.decode()}'
+        print(msg)
+        await from_serial.put(data)
 
-ser = aioserial.AioSerial(port='/dev/ttyUSB1',baudrate=9600,timeout=2)
-print('Port opened')
-q = asyncio.Queue()
-loop = asyncio.get_event_loop()
-loop.add_reader(sys.stdin, read_stdin, q)
-loop.create_task(print_from_stdin(q, ser))
-loop.create_task(read_and_print(ser))
+async def serial_writer(aio_port: aioserial.AioSerial, to_serial):
+    while True:
+        data = await to_serial.get()
+        await aio_port.write_async(data)
 
-print('Started!')
+async def init_all(port=8001):
+    # Open serial port
+    ser = aioserial.AioSerial(port='/dev/ttyUSB1',baudrate=9600,timeout=2)
+    print('Port opened')
+    
+    # Open socket
+    reader, writer = await asyncio.open_connection(
+        '127.0.0.1', port)
+    print('Socket opened')
 
-try:
-    loop.run_forever()
-except KeyboardInterrupt:
-    pass
+    # Create queues
+    from_serial = asyncio.Queue()
+    to_serial = asyncio.Queue()
 
-ser.close()
-loop.close()
+    # Run everything
+    await asyncio.gather(   serial_reader(ser, from_serial), 
+                            serial_writer(ser, to_serial),
+                            socket_reader(reader, to_serial),
+                            socket_writer(writer, from_serial))
+
+asyncio.run(init_all())
