@@ -1,15 +1,42 @@
 <robot name="bender">
+
+    <material name="black">
+        <color rgba="0 0 0 1"/>
+    </material>
+
+    <material name="gray">
+        <color rgba="0.4 0.4 0.4 1"/>
+    </material>
+
     <link name="world"/>
     <link name="base">
         <visual>
             <geometry>
-                <cylinder radius="0.1" length="0.5"/>   
+                <cylinder radius="0.3" length="0.2"/>   
             </geometry>
+            <material name="black"/>
         </visual>
     </link>
+
+    <link name="link_1">
+        <visual>
+            <geometry>
+                <cylinder radius="0.1" length="0.4"/>   
+            </geometry>
+            <material name="gray"/>
+        </visual>
+    </link>
+
     <joint name="world_to_base" type="fixed">
-        <child link="base"/>
         <parent link="world"/>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <child link="base"/>     
+        <origin xyz="0 0 0.1" rpy="0 0 0"/>
+    </joint>
+
+    <joint name="base_to_link_1" type="revolute">
+        <parent link="base"/>
+        <child link="link_1"/>
+        <origin xyz="0 0 0.3" rpy="0 0 0"/>
+        <limit lower="-3.15" upper="3.15"/>
     </joint>
 </robot>
