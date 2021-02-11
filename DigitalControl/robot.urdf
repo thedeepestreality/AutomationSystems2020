@@ -1,0 +1,15 @@
+<robot name="bender">
+    <link name="world"/>
+    <link name="base">
+        <visual>
+            <geometry>
+                <cylinder radius="0.1" length="0.5"/>   
+            </geometry>
+        </visual>
+    </link>
+    <joint name="world_to_base" type="fixed">
+        <child link="base"/>
+        <parent link="world"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+    </joint>
+</robot>
