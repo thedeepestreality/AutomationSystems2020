@@ -8,6 +8,10 @@
         <color rgba="0.4 0.4 0.4 1"/>
     </material>
 
+    <material name="light gray">
+        <color rgba="0.8 0.8 0.8 1"/>
+    </material>
+
     <link name="world"/>
     <link name="base">
         <visual>
@@ -27,16 +31,35 @@
         </visual>
     </link>
 
+    <link name="link_2">
+        <visual>
+            <geometry>
+                <cylinder radius="0.05" length="0.8"/>   
+            </geometry>
+            <material name="light gray"/>
+        </visual>
+    </link>
+
     <joint name="world_to_base" type="fixed">
         <parent link="world"/>
         <child link="base"/>     
         <origin xyz="0 0 0.1" rpy="0 0 0"/>
     </joint>
 
-    <joint name="base_to_link_1" type="revolute">
+    <joint name="joint_1" type="revolute">
         <parent link="base"/>
         <child link="link_1"/>
-        <origin xyz="0 0 0.3" rpy="0 0 0"/>
+        <origin xyz="0.2 0 0.2" rpy="0 1.57 0"/>
         <limit lower="-3.15" upper="3.15"/>
+        <axis xyz="0 0 1"/>
     </joint>
+
+    <joint name="joint_2" type="revolute">
+        <parent link="link_1"/>
+        <child link="link_2"/>
+        <origin xyz="-0.4 0 0.2" rpy="0 -1.57 0"/>
+        <limit lower="-3.15" upper="3.15"/>
+        <axis xyz="0 1 0"/>
+    </joint>
+
 </robot>
