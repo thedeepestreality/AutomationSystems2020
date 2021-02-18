@@ -22,6 +22,7 @@ eef_link_idx = 3
 #                                     controlMode=p.VELOCITY_CONTROL,
 #                                     forces=(0,0))
 
+# log format: "ts, j1, j2"
 
 if PRINT_JOINTS:
     print("Available joints:")
@@ -30,6 +31,11 @@ if PRINT_JOINTS:
         print(f'{joint} name: {jointInfo[1]}')
         print(f'{joint} maxVel: {jointInfo[11]}')
 
+def get_ik(pos,orient):
+    ik_joints = p.calculateInverseKinematics(robot_id, endEffectorLinkIndex = eef_link_idx,
+                                targetPosition = pos,
+                                targetOrientation = orient)
+    return {"joints":ik_joints}
 
 def move_to_position(joint_indices, position) -> None:
     p.setJointMotorControlArray(
