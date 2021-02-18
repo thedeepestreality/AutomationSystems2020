@@ -42,6 +42,15 @@
         </visual>
     </link>
 
+    <link name="link_eef">
+        <visual>
+            <geometry>
+                <cylinder radius="0.05" length="0.1"/>   
+            </geometry>
+            <material name="black"/>
+        </visual>
+    </link>
+
     <joint name="world_to_base" type="fixed">
         <parent link="world"/>
         <child link="base"/>     
@@ -64,4 +73,9 @@
         <axis xyz="0 1 0"/>
     </joint>
 
+    <joint name="joint_eef" type="fixed">
+        <parent link="link_2"/>
+        <child link="link_eef"/>     
+        <origin xyz="0 0 0.8" rpy="0 0 0"/>
+    </joint>
 </robot>
