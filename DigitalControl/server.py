@@ -1,3 +1,4 @@
+# uvicorn server:app --reload
 from fastapi import FastAPI
 import pybullet
 from typing import List
