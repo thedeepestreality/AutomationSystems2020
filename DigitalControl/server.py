@@ -3,7 +3,7 @@ from fastapi import FastAPI
 import pybullet
 from typing import List
 from concurrent.futures import ThreadPoolExecutor
-from robot import step_in_background, move_to_position, get_state, get_ik
+from robot import step_in_background, move_to_position, get_state, get_ik, robot
 import asyncio
 from pydantic import BaseModel
 from logger import Logger
@@ -23,7 +23,7 @@ class CartesianState(BaseModel):
 
 @app.on_event("startup")
 async def startup_event():
-    asyncio.create_task(step_in_background())
+    asyncio.create_task(robot.step())
     
 @app.get("/robot/state")
 async def get_robot_state():
@@ -32,7 +32,8 @@ async def get_robot_state():
 @app.post("/robot/joints")
 async def post_joints(new_state: JointsState):
     try:
-        move_to_position(new_state.ids, new_state.positions, new_state.ts, new_state.scaling)
+        # move_to_position(new_state.ids, new_state.positions, new_state.ts, new_state.scaling)
+        robot.set_control("cubic", new_state.ts, new_state.positions)
     except ValueError as err:
         return {"error": err.args[0]}
     return get_state()
@@ -48,4 +49,4 @@ async def shutdown_event():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=5000, log_level="info")
+    uvicorn.run("server:app", host="127.0.0.1", port=8000, log_level="info", reload=True)

@@ -31,15 +31,18 @@ class Robot:
 
     def __init__(self):
         self.t = 0.0
-        self.trajectory: Iterable = []
+        self.trajectory: Iterable = iter([])
+        self.control_modes = {}
 
     def get_joints_velocity(self):
-        return np.array([
+        return [
             state[1] for state in p.getJointStates(self.robot_id, self.joints)
-        ])
+        ]
 
-    def set_trajectory(self, trajectory: Iterable):
-        self.trajectory = trajectory
+    def get_joints_position(self):
+        return [
+            state[0] for state in p.getJointStates(self.robot_id, self.joints)
+        ]
 
     def set_position_control(self, position):
         p.setJointMotorControlArray(
@@ -49,18 +52,54 @@ class Robot:
             targetPositions=position
         )
 
+    def add_control_mode(self, name, function):
+        self.control_modes[name] = function
+
+    def set_control(self, control_mode, ts, target):
+        function = self.control_modes[control_mode]
+        trajectory = function(
+            self,
+            np.array(self.get_joints_position()), 
+            np.array(target),
+            ts
+        )
+        if type(trajectory) is list:
+            self.trajectory = iter(trajectory)
+        else:
+            self.trajectory = trajectory
+
     def process_control(self):
         # Python 3.9+: if next_position := next(self.trajectory, None):
         next_position = next(self.trajectory, None)
-        if next_position:
+        if next_position is not None:
             self.set_position_control(next_position)
 
-    async def step(self):
+    def step(self):
+        Logger.log(self.t, [*self.get_joints_position(), *self.get_joints_velocity(), 0,0], self.dt)
+        self.process_control()
+        p.stepSimulation()
+        self.t += dt
+
+    async def step_in_background(self):
         while True:
-            self.process_control()
-            p.stepSimulation()
-            self.t += dt
+            self.step()
             await asyncio.sleep(self.dt)
+
+
+def p2p_cubic(robot, q_start, q_end, ts):
+    t_start = 0
+    t_end = t_start + ts
+    t = t_start
+    a2 = 3/(t_end**2)
+    a3 = -2/(t_end**3)
+    while(t<t_end):
+        t += dt
+        s = a2*t**2 + a3*t**3
+        q = q_start + s*(q_end-q_start)
+        yield q
+
+robot = Robot()
+robot.add_control_mode('cubic', p2p_cubic)
 
 robot_id = Robot.robot_id
 
@@ -71,30 +110,6 @@ def get_ik(pos,orient):
                                 targetOrientation = orient)
     return {"joints":ik_joints}
 
-def p2p_cubic(q_start, q_end, t_end, t_start = 0):
-    t = t_start
-    a2 = 3/(t_end**2)
-    a3 = -2/(t_end**3)
-    traj = []
-    while(t<t_end):
-        t += dt
-        s = a2*t**2 + a3*t**3
-        q = q_start + s*(q_end-q_start)
-        traj.append(q)
-    return traj
-
-def move_to_position(joint_indices, q_end, t_end, scaling = "cubic") -> None:
-    q_start = p.getJointStates(robot_id, joint_indices)
-    q_start = np.array([state[0] for state in q_start])
-    q_end = np.array(q_end)
-
-    if (scaling == "cubic"):
-        traj = p2p_cubic(q_start, q_end, t_end)
-    else:
-        print("[Error] unknown scaling type")
-        raise ValueError("unknown scaling type")
-    _glob_data["traj"] = traj
-    _flags["traj"] = True
 
 def get_state():
     link_state = p.getLinkState(robot_id,linkIndex=eef_link_idx,computeForwardKinematics=1)
@@ -111,47 +126,7 @@ def get_state():
     }
     return state
 
-async def step_in_background():
-    t = 0.0
-    traj_idx = 0
-    vel_prev = np.array([0,0])
-    while True:
-        # print(f"flag: {_flags['traj']}")
-        if _flags["traj"]:
-            print(f"len: {len(_glob_data['traj'])}")
-            if (traj_idx < len(_glob_data["traj"])):
-                q_curr = _glob_data["traj"][traj_idx]
-                print(f"CURR: {q_curr}")
-                p.setJointMotorControlArray(
-                        robot_id,
-                        jointIndices=joint_indices,
-                        controlMode=p.POSITION_CONTROL,
-                        targetPositions=q_curr
-                    )
-                traj_idx += 1
-            else:
-                _flags["traj"] = False
-                traj_idx = 0
-        joint_data = [state[0] for state in p.getJointStates(robot_id, joint_indices)]
-        vel_data = [state[1] for state in p.getJointStates(robot_id, joint_indices)]
-        vel_data = np.array(vel_data)
-        acc_data = (vel_data - vel_prev)/dt
-        Logger.log(t, [*joint_data, *vel_data, *acc_data], dt)
-        vel_prev = vel_data
-        p.stepSimulation()
-        await asyncio.sleep(dt)
-        t += dt
-
 if __name__ == "__main__":    
-    joint_indices = [1, 2]
-    home_pos = [0.78, 0.78]
-    move_to_position(joint_indices, home_pos, 1)
-
-    print("After movement:")
-    for joint in range(p.getNumJoints(robot_id)):
-        print(f'{joint} {p.getJointInfo(robot_id, joint)}')
-
+    robot.set_control("cubic", 3, np.array([1., 1.]))
     while True:
-        p.stepSimulation()
-
-    p.disconnect()
+        robot.step()
