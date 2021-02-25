@@ -1,6 +1,7 @@
 import pybullet as p
 import pybullet_data
 import asyncio
+from logger import Logger
 import modern_robotics as mr
 
 URDF_PATH = "robot.urdf"
@@ -53,29 +54,41 @@ def get_state():
     link_orient = link_state[1]
     joint_states = p.getJointStates(robot_id, joint_indices)
     state = {
-                    "joints": [state[0] for state in joint_states] ,
-                    "cart": {
-                        "pos": link_pos,
-                        "quat": link_orient
-                    }
-                }
+        "joints": [state[0] for state in joint_states] ,
+        "cart": {
+            "pos": link_pos,
+            "quat": link_orient
+        }
+    }
     return state
 
 async def step_in_background():
+    t = 0.0
     while True:
+        joint_data = [state[0] for state in p.getJointStates(robot_id, joint_indices)]
+        Logger.log(t, joint_data, dt)
         p.stepSimulation()
         await asyncio.sleep(dt)
+        t += dt
 
 if __name__ == "__main__":    
     joint_indices = [1, 2]
     home_pos = [0.78, 0.78]
-
+    print(p.getJointStates(robot_id, joint_indices))
     move_to_position(joint_indices, home_pos)
 
     print("After movement:")
     for joint in range(p.getNumJoints(robot_id)):
         print(f'{joint} {p.getJointInfo(robot_id, joint)}')
     
+    import time
+    print(p.getJointStates(robot_id, joint_indices))
+    for i in range(10):
+        start = time.monotonic()
+        p.stepSimulation()
+        end = time.monotonic()
+        print(f'TIME: {end-start}')
+
     while True:
         p.stepSimulation()
 
