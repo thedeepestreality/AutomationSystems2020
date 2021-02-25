@@ -1,4 +1,4 @@
-# uvicorn server:app --reload
+#!/usr/bin/env python3
 from fastapi import FastAPI
 import pybullet
 from typing import List
@@ -45,3 +45,7 @@ async def compute_ik(cart_state: CartesianState):
 async def shutdown_event():
     pybullet.disconnect()
     Logger.close()
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=5000, log_level="info")
