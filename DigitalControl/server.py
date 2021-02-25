@@ -6,6 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 from robot import step_in_background, move_to_position, get_state, get_ik
 import asyncio
 from pydantic import BaseModel
+from logger import Logger
 
 app = FastAPI()
 
@@ -38,3 +39,4 @@ async def compute_ik(cart_state: CartesianState):
 @app.on_event("shutdown")
 async def shutdown_event():
     pybullet.disconnect()
+    Logger.close()
