@@ -13,6 +13,8 @@ app = FastAPI()
 class JointsState(BaseModel):
     ids: List[int]
     positions: List[float]
+    ts: float
+    scaling: str
 
 
 class CartesianState(BaseModel):
@@ -29,7 +31,10 @@ async def get_robot_state():
 
 @app.post("/robot/joints")
 async def post_joints(new_state: JointsState):
-    move_to_position(new_state.ids, new_state.positions)
+    try:
+        move_to_position(new_state.ids, new_state.positions, new_state.ts, new_state.scaling)
+    except ValueError as err:
+        return {"error": err.args[0]}
     return get_state()
 
 @app.post("/robot/compute_ik")

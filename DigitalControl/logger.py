@@ -1,7 +1,7 @@
 
 filename = '.log.csv'
 subplots = True
-names = ['Time (s)', 'Joint 1', 'Joint 2']
+names = ['Time (s)', 'Joint 1', 'Joint 2', "Vel 1", "Vel 2", "Acc 1", "Acc 2"]
 
 
 class _Logger:
@@ -46,6 +46,14 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     import pandas as pd
     log_csv = pd.read_csv(filename, header=None, names=names)
-    log_csv.plot(0, [1, 2], subplots=subplots)
+    plt.figure(1)
+    log_csv.plot(0, [1, 2], subplots=subplots,grid=True)
+
+    plt.figure(2)
+    log_csv.plot(0, [3, 4], subplots=subplots,grid=True)
+
+    plt.figure(3)
+    log_csv.plot(0, [5, 6], subplots=subplots,grid=True)
+
     plt.show()
 
