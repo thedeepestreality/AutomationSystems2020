@@ -4,6 +4,7 @@ import asyncio
 from logger import Logger
 import modern_robotics as mr
 import numpy as np
+from collections.abc import Iterable
 
 URDF_PATH = "robot.urdf"
 PRINT_JOINTS = True
@@ -13,7 +14,7 @@ p.setAdditionalSearchPath(pybullet_data.getDataPath())
 p.setGravity(0,0,-10)
 
 plane_id = p.loadURDF("plane.urdf")
-robot_id = p.loadURDF(URDF_PATH, useFixedBase=True)
+# robot_id = p.loadURDF(URDF_PATH, useFixedBase=True)
 
 joint_indices = [1, 2]
 home_pos = np.array([0,0])
@@ -23,18 +24,44 @@ eef_link_idx = 3
 _glob_data={"traj":[]}
 _flags = {"traj":False}
 
-# p.setJointMotorControlArray(robot_id, jointIndices=joint_indices, 
-#                                     controlMode=p.VELOCITY_CONTROL,
-#                                     forces=(0,0))
+class Robot:
+    dt = 1/240
+    robot_id = p.loadURDF(URDF_PATH, useFixedBase=True)
+    joints = [1, 2]
 
-# log format: "ts, j1, j2"
+    def __init__(self):
+        self.t = 0.0
+        self.trajectory: Iterable = []
 
-if PRINT_JOINTS:
-    print("Available joints:")
-    for joint in range(p.getNumJoints(robot_id)):
-        jointInfo = p.getJointInfo(robot_id, joint)
-        print(f'{joint} name: {jointInfo[1]}')
-        print(f'{joint} maxVel: {jointInfo[11]}')
+    def get_joints_velocity(self):
+        return np.array([
+            state[1] for state in p.getJointStates(self.robot_id, self.joints)
+        ])
+
+    def set_trajectory(self, trajectory: Iterable):
+        self.trajectory = trajectory
+
+    def set_position_control(self, position):
+        p.setJointMotorControlArray(
+            self.robot_id,
+            jointIndices=joint_indices,
+            controlMode=p.POSITION_CONTROL,
+            targetPositions=position
+        )
+
+    def process_control(self):
+        if next_position := next(self.trajectory, None):
+            self.set_position_control(next_position)
+
+    async def step(self):
+        while True:
+            self.process_control()
+            p.stepSimulation()
+            self.t += dt
+            await asyncio.sleep(self.dt)
+
+robot_id = Robot.robot_id
+
 
 def get_ik(pos,orient):
     ik_joints = p.calculateInverseKinematics(robot_id, endEffectorLinkIndex = eef_link_idx,
