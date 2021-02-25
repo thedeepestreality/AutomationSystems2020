@@ -74,20 +74,11 @@ async def step_in_background():
 if __name__ == "__main__":    
     joint_indices = [1, 2]
     home_pos = [0.78, 0.78]
-    print(p.getJointStates(robot_id, joint_indices))
     move_to_position(joint_indices, home_pos)
 
     print("After movement:")
     for joint in range(p.getNumJoints(robot_id)):
         print(f'{joint} {p.getJointInfo(robot_id, joint)}')
-    
-    import time
-    print(p.getJointStates(robot_id, joint_indices))
-    for i in range(10):
-        start = time.monotonic()
-        p.stepSimulation()
-        end = time.monotonic()
-        print(f'TIME: {end-start}')
 
     while True:
         p.stepSimulation()
