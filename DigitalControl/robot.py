@@ -50,7 +50,9 @@ class Robot:
         )
 
     def process_control(self):
-        if next_position := next(self.trajectory, None):
+        # Python 3.9+: if next_position := next(self.trajectory, None):
+        next_position = next(self.trajectory, None)
+        if next_position:
             self.set_position_control(next_position)
 
     async def step(self):
