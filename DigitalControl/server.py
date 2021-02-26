@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+# uvicorn server:app --reload
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 import pybullet
@@ -53,8 +53,3 @@ async def unicorn_exception_handler(request: Request, exc: NoSuchControlType):
         status_code=400,
         content={"message": f"No such control type: {exc.args[0]}"},
     )
-
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("server:app", host="127.0.0.1", port=8000, log_level="info", reload=True)
