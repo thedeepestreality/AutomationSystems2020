@@ -18,16 +18,17 @@ class NoSuchControlType(KeyError):
     pass
 
 class Robot:
-    dt = 1/240
-    robot_id = p.loadURDF(URDF_PATH, useFixedBase=True)
+    # To be available as default argument made as a class variable
     joints = (1, 2)
-    eef_link_idx = 3
 
     def __init__(self):
+        self.robot_id = p.loadURDF(URDF_PATH, useFixedBase=True)
+        self.dt = 1/240
         self.t = 0.0
         self.trajectory: Iterable = iter([])
         self.control_modes = {}
         self.previous_step_velocity = self.get_joints_velocity()
+        self.eef_link_idx = 3
 
     def get_joints_position(self, joint_indicies=joints):
         return np.array([
@@ -129,6 +130,8 @@ def p2p_cubic(robot, q_end, ts):
         s = a2*t**2 + a3*t**3
         q = q_start + s*(q_end-q_start)
         yield q
+        # Or you can apend q to some list
+        # and return list at the end
 
 robot = Robot()
 robot.add_control_mode('cubic', p2p_cubic)
