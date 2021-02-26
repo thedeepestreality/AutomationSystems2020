@@ -27,16 +27,20 @@ class Robot:
         self.t = 0.0
         self.trajectory: Iterable = iter([])
         self.control_modes = {}
+        self.previous_step_velocity = self.get_joints_velocity()
 
     def get_joints_position(self, joint_indicies=joints):
-        return [
+        return np.array([
             state[0] for state in p.getJointStates(self.robot_id, joint_indicies)
-        ]
+        ])
 
     def get_joints_velocity(self, joint_indicies=joints):
-        return [
+        return np.array([
             state[1] for state in p.getJointStates(self.robot_id, joint_indicies)
-        ]
+        ])
+
+    def get_joints_acceleration(self, joint_indicies=joints):
+        return (self.get_joints_velocity() - self.previous_step_velocity) / self.dt
 
     def get_full_state(self):
         link_state = p.getLinkState(self.robot_id, linkIndex=self.eef_link_idx)
@@ -66,6 +70,13 @@ class Robot:
         )
 
     def add_control_mode(self, name, function):
+        """
+        Adds new control regime
+        
+        function should take arguments
+        robot: Robot, target_position: np.array, ts: time in s
+        and return list or generator with trajectory points
+        """
         self.control_modes[name] = function
 
     def set_control(self, control_mode, ts, target):
@@ -86,8 +97,17 @@ class Robot:
         if next_position is not None:
             self.set_position_control(next_position)
 
+    def log_state(self):
+        data = (
+            *self.get_joints_position(),
+            *self.get_joints_velocity(),
+            *self.get_joints_acceleration()
+        )
+        Logger.log(self.t, data, self.dt)
+
     def step(self):
-        Logger.log(self.t, [*self.get_joints_position(), *self.get_joints_velocity(), 0,0], self.dt)
+        self.log_state()
+        self.previous_step_velocity = self.get_joints_velocity()
         self.process_control()
         p.stepSimulation()
         self.t += self.dt
@@ -99,7 +119,7 @@ class Robot:
 
 
 def p2p_cubic(robot, q_end, ts):
-    q_start = np.array(robot.get_joints_position())
+    q_start = robot.get_joints_position()
     a2 = 3/(ts**2)
     a3 = -2/(ts**3)
     t = 0
