@@ -144,7 +144,7 @@ class Robot:
                 else:
                     curr_vel = np.array([0,0])
                 
-                yield from control(self, curr_pos, 0*curr_vel, target.ts)
+                yield from control(self, curr_pos, curr_vel, target.ts)
         
         trajectory = union_generator()
 
@@ -196,11 +196,7 @@ def p2p_cubic(robot, q_end, ts):
 def traj_segment_cubic(robot, q_end, vel_end, ts):
     q_start = robot.get_joints_position()
     vel_start = robot.get_joints_velocity()
-    print(f"q_start: {q_start}")
-    print(f"vel_start: {vel_start}")
-    print(f"q_end: {q_end}")
-    print(f"vel_end: {vel_end}")
-    print(f"TS: {ts}")
+
     b0 = q_start
     db0 = vel_start
     b1 = q_end
@@ -209,15 +205,11 @@ def traj_segment_cubic(robot, q_end, vel_end, ts):
     a0 = b0
     a1 = db0
     a2 = (3*b1 - 3*b0 - 2*db0*ts - db1*ts)/(ts**2)
-    a3 = (2*b0 + (db0 + db1)*ts - 2*db1)/(ts**3)
+    a3 = (2*b0 + (db0 + db1)*ts - 2*b1)/(ts**3)
     t = 0
-    print(f"a2: {a2}")
+
     while t < ts:
         t += robot.dt
-        # print(f"a0: {a0}")
-        # print(f"a1: {a1*t}")
-        # print(f"a2: {a2*t**2}")
-        # print(f"a3: {a3*t**3}")
         q = a0 + a1*t + a2*t**2 + a3*t**3
         yield q
         # Or you can apend q to some list
