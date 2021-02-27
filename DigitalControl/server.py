@@ -20,9 +20,13 @@ class JointTarget(BaseModel):
     pos: List[float]
     ts: float
 
-class JointTraj(BaseModel):
+class JointTrajLin(BaseModel):
     traj: List[JointTarget]
     scaling: str
+
+class JointTrajInterp(BaseModel):
+    traj: List[JointTarget]
+    interpolation: str
 
 class CartesianState(BaseModel):
     pos: List[float]
@@ -44,10 +48,18 @@ async def post_joints(new_state: JointsState):
         return {"error": err.args[0]}
     return robot.get_full_state()
 
-@app.post("/robot/joint_traj")
-async def joint_traj(traj: JointTraj):
+@app.post("/robot/joint_traj_lin")
+async def joint_traj(traj: JointTrajLin):
     try:
-        robot.set_traj_control(traj.scaling, traj.traj)
+        robot.set_traj_control_lin(traj.scaling, traj.traj)
+    except ValueError as err:
+        return {"error": err.args[0]}
+    return robot.get_full_state()
+
+@app.post("/robot/joint_traj_interp")
+async def joint_traj(traj: JointTrajInterp):
+    try:
+        robot.set_traj_control_interp(traj.interpolation, traj.traj)
     except ValueError as err:
         return {"error": err.args[0]}
     return robot.get_full_state()
