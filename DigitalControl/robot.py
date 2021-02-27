@@ -26,7 +26,7 @@ class Robot:
         self.dt = 1/240
         self.t = 0.0
         self.trajectory: Iterable = iter([])
-        self.control_modes = {}
+        self.scaling_modes = {}
         self.previous_step_velocity = self.get_joints_velocity()
         self.eef_link_idx = 3
 
@@ -70,7 +70,7 @@ class Robot:
             targetPositions=position
         )
 
-    def add_control_mode(self, name, function):
+    def add_scaling_mode(self, name, function):
         """
         Adds new control regime
         
@@ -78,16 +78,33 @@ class Robot:
         robot: Robot, target_position: np.array, ts: time in s
         and return list or generator with trajectory points
         """
-        self.control_modes[name] = function
+        self.scaling_modes[name] = function
 
-    def set_control(self, control_mode, ts, target):
+    def set_control(self, scaling_mode, ts, target):
         try:
-            control = self.control_modes[control_mode]
+            control = self.scaling_modes[scaling_mode]
         except KeyError:
-            raise NoSuchControlType(control_mode)
+            raise NoSuchControlType(scaling_mode)
 
         trajectory = control(self, np.array(target), ts)
         
+        if type(trajectory) is list:
+            self.trajectory = iter(trajectory)
+        else:
+            self.trajectory = trajectory
+    
+    def set_traj_control(self, scaling_mode, target_traj):
+        try:
+            control = self.scaling_modes[scaling_mode]
+        except KeyError:
+            raise NoSuchControlType(scaling_mode)
+
+        def union_generator():
+            for target in target_traj:
+                yield from control(self, np.array(target.pos), target.ts)
+        
+        trajectory = union_generator()
+
         if type(trajectory) is list:
             self.trajectory = iter(trajectory)
         else:
@@ -134,7 +151,7 @@ def p2p_cubic(robot, q_end, ts):
         # and return list at the end
 
 robot = Robot()
-robot.add_control_mode('cubic', p2p_cubic)
+robot.add_scaling_mode('cubic', p2p_cubic)
 
 if __name__ == "__main__":    
     robot.set_control("cubic", ts=3, target=np.array([1., 1.]))

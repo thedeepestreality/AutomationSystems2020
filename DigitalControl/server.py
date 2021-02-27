@@ -16,6 +16,13 @@ class JointsState(BaseModel):
     ts: float
     scaling: str
 
+class JointTarget(BaseModel):
+    pos: List[float]
+    ts: float
+
+class JointTraj(BaseModel):
+    traj: List[JointTarget]
+    scaling: str
 
 class CartesianState(BaseModel):
     pos: List[float]
@@ -33,6 +40,14 @@ async def get_robot_state():
 async def post_joints(new_state: JointsState):
     try:
         robot.set_control(new_state.scaling, new_state.ts, new_state.positions)
+    except ValueError as err:
+        return {"error": err.args[0]}
+    return robot.get_full_state()
+
+@app.post("/robot/joint_traj")
+async def joint_traj(traj: JointTraj):
+    try:
+        robot.set_traj_control(traj.scaling, traj.traj)
     except ValueError as err:
         return {"error": err.args[0]}
     return robot.get_full_state()
