@@ -46,8 +46,8 @@ class Robot:
     def get_full_state(self):
         link_state = p.getLinkState(self.robot_id, linkIndex=self.eef_link_idx)
         return {
-            "joints": self.get_joints_position(),
-            "vels": self.get_joints_velocity(),
+            "joints": list(self.get_joints_position()),
+            "vels": list(self.get_joints_velocity()),
             "cart": {
                 "pos": link_state[0],
                 "quat": link_state[1]

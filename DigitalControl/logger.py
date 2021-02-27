@@ -51,5 +51,8 @@ if __name__ == '__main__':
     log_csv.plot(0, [3, 4], subplots=subplots,grid=True)
     plt.figure(2)
     log_csv.plot(0, [5, 6], subplots=subplots,grid=True)
+    plt.figure(3)
+    log_csv.plot(1, 2, subplots=subplots,grid=True)
+    plt.figure(4)
     plt.show()
 
