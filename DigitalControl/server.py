@@ -2,35 +2,13 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 import pybullet
-from typing import List
 from concurrent.futures import ThreadPoolExecutor
 from robot import NoSuchControlType, robot
 import asyncio
-from pydantic import BaseModel
 from logger import Logger
+from dtos import *
 
 app = FastAPI()
-
-class JointsState(BaseModel):
-    positions: List[float]
-    ts: float
-    scaling: str
-
-class JointTarget(BaseModel):
-    pos: List[float]
-    ts: float
-
-class JointTrajLin(BaseModel):
-    traj: List[JointTarget]
-    scaling: str
-
-class JointTrajInterp(BaseModel):
-    traj: List[JointTarget]
-    interpolation: str
-
-class CartesianState(BaseModel):
-    pos: List[float]
-    orient: List[float]
 
 @app.on_event("startup")
 async def startup_event():
@@ -60,6 +38,14 @@ async def joint_traj(traj: JointTrajLin):
 async def joint_traj(traj: JointTrajInterp):
     try:
         robot.set_traj_control_interp(traj.interpolation, traj.traj)
+    except ValueError as err:
+        return {"error": err.args[0]}
+    return robot.get_full_state()
+
+@app.post("/robot/cart_traj")
+async def cart_traj(traj: CartesianTraj):
+    try:
+        robot.set_cart_traj(traj.interpolation, traj.traj)
     except ValueError as err:
         return {"error": err.args[0]}
     return robot.get_full_state()

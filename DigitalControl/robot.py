@@ -5,6 +5,7 @@ from logger import Logger
 import modern_robotics as mr
 import numpy as np
 from collections.abc import Iterable
+from dtos import *
 
 URDF_PATH = "robot.urdf"
 PRINT_JOINTS = True
@@ -43,6 +44,10 @@ class Robot:
 
     def get_joints_acceleration(self, joint_indicies=joints):
         return (self.get_joints_velocity() - self.previous_step_velocity) / self.dt
+
+    def get_cart_pose(self):
+        link_state = p.getLinkState(self.robot_id, linkIndex=self.eef_link_idx)
+        return link_state[0]
 
     def get_full_state(self):
         link_state = p.getLinkState(self.robot_id, linkIndex=self.eef_link_idx)
@@ -122,6 +127,7 @@ class Robot:
             self.trajectory = trajectory
 
     def set_traj_control_interp(self, interpolation_mode, target_traj):
+        print("JCONTROL")
         try:
             control = self.interpolation_modes[interpolation_mode]
         except KeyError:
@@ -153,6 +159,20 @@ class Robot:
         else:
             self.trajectory = trajectory
 
+    def set_cart_traj(self, interpolation_mode, target_traj):
+        joint_targets = []
+        for cart in target_traj:
+            joints = p.calculateInverseKinematics(
+                self.robot_id,
+                endEffectorLinkIndex=self.eef_link_idx,
+                targetPosition=cart.pos,
+                targetOrientation=cart.orient
+            )
+            joints = list(joints)
+            curr_targ = JointTarget(pos= joints, ts=cart.ts)
+            joint_targets.append(curr_targ)
+        self.set_traj_control_interp(interpolation_mode, joint_targets)
+    
     def process_control(self):
         next_position = next(self.trajectory, None)
         if next_position is not None:
@@ -162,7 +182,8 @@ class Robot:
         data = (
             *self.get_joints_position(),
             *self.get_joints_velocity(),
-            *self.get_joints_acceleration()
+            *self.get_joints_acceleration(),
+            *self.get_cart_pose()
         )
         Logger.log(self.t, data, self.dt)
 

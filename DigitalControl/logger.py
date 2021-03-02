@@ -1,7 +1,7 @@
 
 filename = '.log.csv'
 subplots = True
-names = ['Time (s)', 'Joint 1', 'Joint 2', "Vel 1", "Vel 2", "Acc 1", "Acc 2"]
+names = ['Time (s)', 'Joint 1', 'Joint 2', "Vel 1", "Vel 2", "Acc 1", "Acc 2","X","Y","Z"]
 
 
 class _Logger:
@@ -54,5 +54,7 @@ if __name__ == '__main__':
     plt.figure(3)
     log_csv.plot(1, 2, subplots=subplots,grid=True)
     plt.figure(4)
+    log_csv.plot(7, 8, subplots=subplots,grid=True)
+    plt.figure(5)
     plt.show()
 
