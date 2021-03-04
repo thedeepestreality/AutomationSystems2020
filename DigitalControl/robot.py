@@ -207,11 +207,13 @@ class Robot:
         except KeyError:
             raise NoSuchControlType(motion_type)
 
-        for cart in target_traj:
-            T = self.pybullet_to_homogeneous(cart.pos, cart.orient)
-           # trajectory = control(self, T, cart.ts)
-            trajectory = p2p_cart_cubic_screw(self, T, cart.ts)
+        def union_generator():
+            for cart in target_traj:
+                T = self.pybullet_to_homogeneous(cart.pos, cart.orient)
+                yield from control(self, T, cart.ts)
         
+        trajectory = union_generator()
+
         if type(trajectory) is list:
             self.trajectory = iter(trajectory)
         else:
@@ -260,6 +262,7 @@ def p2p_cubic(robot, q_end, ts):
 
 def p2p_cart_cubic_screw(robot, T_end, ts):
     T_start = robot.get_homogeneous()
+
     a2 = 3/(ts**2)
     a3 = -2/(ts**3)
     t = 0
@@ -267,10 +270,12 @@ def p2p_cart_cubic_screw(robot, T_end, ts):
     while t < ts:
         t += robot.dt
         s = a2*t**2 + a3*t**3
-        T = T_start*mr.MatrixExp6(mr.MatrixLog6(np.linalg.inv(T_start)*T_end)*s)
+        T = T_start @ mr.MatrixExp6(mr.MatrixLog6(np.linalg.inv(T_start)@T_end)*s)
+
         pos = T[0:3,3]
         mat_rot = T[0:3,0:3]
         eul = rot2eul(mat_rot)
+
         quat = p.getQuaternionFromEuler(eul)
         joints = p.calculateInverseKinematics(
                 robot.robot_id,
@@ -296,7 +301,7 @@ def p2p_cart_cubic_decoupled(robot, T_end, ts):
         t += robot.dt
         s = a2*t**2 + a3*t**3
         pos = pos_start + (pos_end - pos_start)*s
-        mat_rot = rot_start*mr.MatrixExp3(mr.MatrixLog3(rot_start.T*rot_end)*s)
+        mat_rot = rot_start @ mr.MatrixExp3(mr.MatrixLog3(rot_start.T @ rot_end)*s)
         eul = rot2eul(mat_rot)
         quat = p.getQuaternionFromEuler(eul)
         joints = p.calculateInverseKinematics(
@@ -336,7 +341,7 @@ robot.add_scaling_mode('cubic', p2p_cubic)
 robot.add_interpolation_mode('cubic', traj_segment_cubic)
 
 robot.add_motion_type('screw', p2p_cart_cubic_screw)
-#robot.add_motion_type("decoupled", p2p_cart_cubic_decoupled)
+robot.add_motion_type("decoupled", p2p_cart_cubic_decoupled)
 
 if __name__ == "__main__":    
     link_state = p.getLinkState(robot.robot_id, linkIndex=robot.eef_link_idx)
