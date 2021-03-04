@@ -35,7 +35,7 @@ async def joint_traj(traj: JointTrajLin):
     return robot.get_full_state()
 
 @app.post("/robot/joint_traj_interp")
-async def joint_traj(traj: JointTrajInterp):
+async def joint_traj_interp(traj: JointTrajInterp):
     try:
         robot.set_traj_control_interp(traj.interpolation, traj.traj)
     except ValueError as err:
@@ -46,6 +46,14 @@ async def joint_traj(traj: JointTrajInterp):
 async def cart_traj(traj: CartesianTraj):
     try:
         robot.set_cart_traj(traj.interpolation, traj.traj)
+    except ValueError as err:
+        return {"error": err.args[0]}
+    return robot.get_full_state()
+
+@app.post("/robot/cart_traj_screw")
+async def cart_traj_screw(traj: CartesianTraj):
+    try:
+        robot.set_cart_traj_screw(traj.traj)
     except ValueError as err:
         return {"error": err.args[0]}
     return robot.get_full_state()

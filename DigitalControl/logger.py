@@ -56,5 +56,8 @@ if __name__ == '__main__':
     plt.figure(4)
     log_csv.plot(7, 8, subplots=subplots,grid=True)
     plt.figure(5)
+
+    # log_csv.plot(7,8,zs=9,projection='3d')
+    # plt.figure(6)
     plt.show()
 

@@ -18,6 +18,12 @@ plane_id = p.loadURDF("plane.urdf")
 class NoSuchControlType(KeyError):
     pass
 
+def rot2eul(R):
+    beta = -np.arcsin(R[2,0])
+    alpha = np.arctan2(R[2,1]/np.cos(beta),R[2,2]/np.cos(beta))
+    gamma = np.arctan2(R[1,0]/np.cos(beta),R[0,0]/np.cos(beta))
+    return np.array((alpha, beta, gamma))
+    
 class Robot:
     # To be available as default argument made as a class variable
     joints = (1, 2)
@@ -48,6 +54,18 @@ class Robot:
     def get_cart_pose(self):
         link_state = p.getLinkState(self.robot_id, linkIndex=self.eef_link_idx)
         return link_state[0]
+
+    def pybullet_to_homogeneous(self, pos, quat):
+        np_pos = np.array([pos]).T
+        flat_rot = np.array(p.getMatrixFromQuaternion(quat))
+        mat_rot = np.reshape(flat_rot, (3,3))
+        X = np.concatenate((mat_rot, np_pos), axis = 1)
+        X = np.concatenate((X, np.array([[0,0,0,1]])), axis = 0)
+        return X
+
+    def get_homogeneous(self):
+        link_state = p.getLinkState(self.robot_id, linkIndex=self.eef_link_idx)
+        return self.pybullet_to_homogeneous(link_state[0], link_state[1])
 
     def get_full_state(self):
         link_state = p.getLinkState(self.robot_id, linkIndex=self.eef_link_idx)
@@ -172,6 +190,16 @@ class Robot:
             curr_targ = JointTarget(pos= joints, ts=cart.ts)
             joint_targets.append(curr_targ)
         self.set_traj_control_interp(interpolation_mode, joint_targets)
+
+    def set_cart_traj_screw(self, target_traj):
+        for cart in target_traj:
+            T = self.pybullet_to_homogeneous(cart.pos, cart.orient)
+            trajectory = p2p_cart_cubic_screw(self, T, cart.ts)
+        
+        if type(trajectory) is list:
+            self.trajectory = iter(trajectory)
+        else:
+            self.trajectory = trajectory
     
     def process_control(self):
         next_position = next(self.trajectory, None)
@@ -214,6 +242,30 @@ def p2p_cubic(robot, q_end, ts):
         # Or you can apend q to some list
         # and return list at the end
 
+def p2p_cart_cubic_screw(robot, T_end, ts):
+    T_start = robot.get_homogeneous()
+    a2 = 3/(ts**2)
+    a3 = -2/(ts**3)
+    t = 0
+
+    while t < ts:
+        t += robot.dt
+        s = a2*t**2 + a3*t**3
+        T = T_start*mr.MatrixExp6(mr.MatrixLog6(np.linalg.inv(T_start)*T_end)*s)
+        pos = T[0:3,3]
+        mat_rot = T[0:3,0:3]
+        eul = rot2eul(mat_rot)
+        quat = p.getQuaternionFromEuler(eul)
+        joints = p.calculateInverseKinematics(
+                robot.robot_id,
+                endEffectorLinkIndex=robot.eef_link_idx,
+                targetPosition=pos,
+                targetOrientation=quat
+            )
+        yield joints
+        # Or you can apend q to some list
+        # and return list at the end
+
 def traj_segment_cubic(robot, q_end, vel_end, ts):
     q_start = robot.get_joints_position()
     vel_start = robot.get_joints_velocity()
@@ -241,6 +293,13 @@ robot.add_scaling_mode('cubic', p2p_cubic)
 robot.add_interpolation_mode('cubic', traj_segment_cubic)
 
 if __name__ == "__main__":    
-    robot.set_control("cubic", ts=3, target=np.array([1., 1.]))
+    link_state = p.getLinkState(robot.robot_id, linkIndex=robot.eef_link_idx)
+    X = robot.pybullet_to_homogeneous(link_state[0], link_state[1])
+    print(f"X: {X}")
+    rot = X[0:3,0:3]
+    eul = rot2eul(rot)
+    print(f"EUL: {eul}")
+
+    # robot.set_control("cubic", ts=3, target=np.array([1., 1.]))
     while True:
         robot.step()
