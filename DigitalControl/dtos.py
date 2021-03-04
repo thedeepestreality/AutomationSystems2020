@@ -28,3 +28,7 @@ class CartesianTarget(CartesianState):
 class CartesianTraj(BaseModel):
     traj: List[CartesianTarget]
     interpolation: str
+
+class CartesianTrajP2p(BaseModel):
+    traj: List[CartesianTarget]
+    motion_type: str

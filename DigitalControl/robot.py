@@ -35,6 +35,7 @@ class Robot:
         self.trajectory: Iterable = iter([])
         self.scaling_modes = {}
         self.interpolation_modes = {}
+        self.motion_types = {}
         self.previous_step_velocity = self.get_joints_velocity()
         self.eef_link_idx = 3
 
@@ -114,6 +115,16 @@ class Robot:
         """
         self.interpolation_modes[name] = function
 
+    def add_motion_type(self, name, function):
+        """
+        Adds new control regime
+        
+        function should take arguments
+        robot: Robot, target_position: np.array, ts: time in s
+        and return list or generator with trajectory points
+        """
+        self.motion_types[name] = function
+
     def set_control(self, scaling_mode, ts, target):
         try:
             control = self.scaling_modes[scaling_mode]
@@ -145,7 +156,6 @@ class Robot:
             self.trajectory = trajectory
 
     def set_traj_control_interp(self, interpolation_mode, target_traj):
-        print("JCONTROL")
         try:
             control = self.interpolation_modes[interpolation_mode]
         except KeyError:
@@ -191,9 +201,15 @@ class Robot:
             joint_targets.append(curr_targ)
         self.set_traj_control_interp(interpolation_mode, joint_targets)
 
-    def set_cart_traj_screw(self, target_traj):
+    def set_cart_traj_p2p(self, motion_type, target_traj):
+        try:
+            control = self.motion_types[motion_type]
+        except KeyError:
+            raise NoSuchControlType(motion_type)
+
         for cart in target_traj:
             T = self.pybullet_to_homogeneous(cart.pos, cart.orient)
+           # trajectory = control(self, T, cart.ts)
             trajectory = p2p_cart_cubic_screw(self, T, cart.ts)
         
         if type(trajectory) is list:
@@ -266,6 +282,33 @@ def p2p_cart_cubic_screw(robot, T_end, ts):
         # Or you can apend q to some list
         # and return list at the end
 
+def p2p_cart_cubic_decoupled(robot, T_end, ts):
+    T_start = robot.get_homogeneous()
+    pos_start = T_start[0:3,3]
+    pos_end = T_end[0:3,3]
+    rot_start = T_start[0:3,0:3]
+    rot_end = T_end[0:3,0:3]
+    a2 = 3/(ts**2)
+    a3 = -2/(ts**3)
+    t = 0
+
+    while t < ts:
+        t += robot.dt
+        s = a2*t**2 + a3*t**3
+        pos = pos_start + (pos_end - pos_start)*s
+        mat_rot = rot_start*mr.MatrixExp3(mr.MatrixLog3(rot_start.T*rot_end)*s)
+        eul = rot2eul(mat_rot)
+        quat = p.getQuaternionFromEuler(eul)
+        joints = p.calculateInverseKinematics(
+                robot.robot_id,
+                endEffectorLinkIndex=robot.eef_link_idx,
+                targetPosition=pos,
+                targetOrientation=quat
+            )
+        yield joints
+        # Or you can apend q to some list
+        # and return list at the end
+
 def traj_segment_cubic(robot, q_end, vel_end, ts):
     q_start = robot.get_joints_position()
     vel_start = robot.get_joints_velocity()
@@ -291,6 +334,9 @@ def traj_segment_cubic(robot, q_end, vel_end, ts):
 robot = Robot()
 robot.add_scaling_mode('cubic', p2p_cubic)
 robot.add_interpolation_mode('cubic', traj_segment_cubic)
+
+robot.add_motion_type('screw', p2p_cart_cubic_screw)
+#robot.add_motion_type("decoupled", p2p_cart_cubic_decoupled)
 
 if __name__ == "__main__":    
     link_state = p.getLinkState(robot.robot_id, linkIndex=robot.eef_link_idx)

@@ -50,10 +50,10 @@ async def cart_traj(traj: CartesianTraj):
         return {"error": err.args[0]}
     return robot.get_full_state()
 
-@app.post("/robot/cart_traj_screw")
-async def cart_traj_screw(traj: CartesianTraj):
+@app.post("/robot/cart_traj_p2p")
+async def cart_traj_p2p(traj: CartesianTrajP2p):
     try:
-        robot.set_cart_traj_screw(traj.traj)
+        robot.set_cart_traj_p2p(traj.motion_type, traj.traj)
     except ValueError as err:
         return {"error": err.args[0]}
     return robot.get_full_state()
