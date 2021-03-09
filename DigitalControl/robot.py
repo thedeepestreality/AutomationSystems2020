@@ -26,7 +26,7 @@ def rot2eul(R):
     
 class Robot:
     # To be available as default argument made as a class variable
-    joints = (1, 2)
+    joints = (1, 2, 3, 4, 5, 6)
 
     def __init__(self):
         self.robot_id = p.loadURDF(URDF_PATH, useFixedBase=True)
@@ -37,7 +37,10 @@ class Robot:
         self.interpolation_modes = {}
         self.motion_types = {}
         self.previous_step_velocity = self.get_joints_velocity()
-        self.eef_link_idx = 3
+        self.eef_link_idx = 7
+        self.set_position_control([0,0,1.57,0,1.57,0])
+        for i in range(100):
+            p.stepSimulation()
 
     def get_joints_position(self, joint_indicies=joints):
         return np.array([

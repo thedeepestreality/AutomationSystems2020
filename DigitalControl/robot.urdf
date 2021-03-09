@@ -12,6 +12,18 @@
         <color rgba="0.8 0.8 0.8 1"/>
     </material>
 
+    <material name="light green">
+        <color rgba="0.4 0.8 0.4 1"/>
+    </material>
+
+    <material name="light blue">
+        <color rgba="0.4 0.4 0.8 1"/>
+    </material>
+
+    <material name="light red">
+        <color rgba="0.8 0.4 0.4 1"/>
+    </material>
+
     <link name="world"/>
     <link name="base">
         <visual>
@@ -42,11 +54,36 @@
         </visual>
     </link>
 
+    <link name="link_3"/>
+
+    <link name="link_4">
+        <visual>
+            <geometry>
+                <cylinder radius="0.05" length="0.4"/>   
+            </geometry>
+            <origin xyz="0 0 0.2" rpy="0 0 0" />
+            <material name="light blue"/>
+        </visual>
+    </link>
+
+    <link name="link_5">
+        <visual>
+            <geometry>
+                <cylinder radius="0.05" length="0.2"/>   
+            </geometry>
+            <origin xyz="0 0 0.1" rpy="0 0 0" />
+            <material name="light green"/>
+        </visual>
+    </link>
+
+    <link name="link_6"/>
+
     <link name="link_eef">
         <visual>
             <geometry>
-                <cylinder radius="0.05" length="0.1"/>   
+                <box size="0.1 0.1 0.1"/>   
             </geometry>
+            <origin xyz="0 0 0.05" rpy="0 0 0" />
             <material name="black"/>
         </visual>
     </link>
@@ -73,9 +110,41 @@
         <axis xyz="0 1 0"/>
     </joint>
 
-    <joint name="joint_eef" type="fixed">
+    <joint name="joint_3" type="revolute">
         <parent link="link_2"/>
-        <child link="link_eef"/>     
+        <child link="link_3"/>
         <origin xyz="0 0 0.8" rpy="0 0 0"/>
+        <limit lower="-3.15" upper="3.15"/>
+        <axis xyz="0 1 0"/>
+    </joint>
+
+    <joint name="joint_4" type="revolute">
+        <parent link="link_3"/>
+        <child link="link_4"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <limit lower="-3.15" upper="3.15"/>
+        <axis xyz="0 0 1"/>
+    </joint>
+
+    <joint name="joint_5" type="revolute">
+        <parent link="link_4"/>
+        <child link="link_5"/>
+        <origin xyz="0 0 0.4" rpy="0 0 0"/>
+        <limit lower="-3.15" upper="3.15"/>
+        <axis xyz="0 1 0"/>
+    </joint>
+
+    <joint name="joint_6" type="revolute">
+        <parent link="link_5"/>
+        <child link="link_6"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <limit lower="-3.15" upper="3.15"/>
+        <axis xyz="0 0 1"/>
+    </joint>
+
+    <joint name="joint_eef" type="fixed">
+        <parent link="link_6"/>
+        <child link="link_eef"/>     
+        <origin xyz="0 0 0.2" rpy="0 0 0"/>
     </joint>
 </robot>

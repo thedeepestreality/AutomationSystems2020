@@ -1,8 +1,10 @@
 
 filename = '.log.csv'
 subplots = True
-names = ['Time (s)', 'Joint 1', 'Joint 2', "Vel 1", "Vel 2", "Acc 1", "Acc 2","X","Y","Z"]
-
+names = ['Time (s)', 'Joint 1', 'Joint 2', 'Joint 3', 'Joint 4', 'Joint 5', 'Joint 6',
+                     'Vel 1', 'Vel 2', 'Vel 3', 'Vel 4', 'Vel 5', 'Vel 6', 
+                     'Acc 1', 'Acc 2', 'Acc 3', 'Acc 4', 'Acc 5', 'Acc 6',
+                     'X', 'Y', 'Z']
 
 class _Logger:
     def __init__(self):
@@ -46,18 +48,15 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     import pandas as pd
     log_csv = pd.read_csv(filename, header=None, names=names)
-    log_csv.plot(0, [1, 2], subplots=subplots,grid=True)
-    plt.figure(1)
-    log_csv.plot(0, [3, 4], subplots=subplots,grid=True)
-    plt.figure(2)
-    log_csv.plot(0, [5, 6], subplots=subplots,grid=True)
-    plt.figure(3)
-    log_csv.plot(1, 2, subplots=subplots,grid=True)
-    plt.figure(4)
-    log_csv.plot(7, 8, subplots=subplots,grid=True)
-    plt.figure(5)
 
-    # log_csv.plot(7,8,zs=9,projection='3d')
-    # plt.figure(6)
+    log_csv.plot(0, [1, 4, 2, 5, 3, 6], subplots=subplots,grid=True, layout=(3,2))
+    plt.figure(1)
+    log_csv.plot(0, [7, 10, 8, 11, 9, 12], subplots=subplots,grid=True, layout=(3,2))
+    plt.figure(2)
+    log_csv.plot(0, [13, 16, 14, 17, 15, 18], subplots=subplots,grid=True, layout=(3,2))
+    plt.figure(3)
+    log_csv.plot(19, 20, subplots=subplots, grid=True)
+    plt.figure(4)
+
     plt.show()
 
