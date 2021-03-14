@@ -10,6 +10,7 @@ p.setAdditionalSearchPath(pybullet_data.getDataPath()) #optionally
 p.setGravity(0,0,-10)
 planeId = p.loadURDF("plane.urdf")
 boxId = p.loadURDF(comau_config_path, useFixedBase=True)
+p.setJointMotorControl2(bodyIndex=boxId, jointIndex=1, targetVelocity=0, controlMode=p.VELOCITY_CONTROL, force=0)
 while True:
     p.stepSimulation()
     time.sleep(dt)
