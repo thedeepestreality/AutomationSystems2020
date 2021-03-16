@@ -73,7 +73,7 @@
     <joint name="joint_1" type="revolute">
         <parent link="base"/>
         <child link="link_1"/>
-        <origin xyz="0.0 0 -0.1" rpy="0 1.57 0"/>
+        <origin xyz="0.0 0 -0.1" rpy="0 0 0"/>
         <limit effort="0" velocity="0"/>
         <dynamics damping="1" friction="1"/>
         <axis xyz="0 1 0"/>
