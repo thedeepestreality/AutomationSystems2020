@@ -4,7 +4,12 @@ import pybullet_data
 import numpy as np
 comau_config_path= "./simple.urdf"
 
-dt=1/240
+dt = 1/240
+x0 = np.array([0, 0.3])
+T = 6
+RT = False
+COMPARE = True
+
 physicsClient = p.connect(p.GUI)#or p.DIRECT for non-graphical version
 p.setAdditionalSearchPath(pybullet_data.getDataPath()) #optionally
 p.setGravity(0,0,-10)
@@ -15,7 +20,7 @@ boxId = p.loadURDF(comau_config_path, useFixedBase=True)
 p.changeDynamics(boxId, 1, linearDamping=0, angularDamping=0)
 p.changeDynamics(boxId, 2, linearDamping=0, angularDamping=0)
 
-p.setJointMotorControl2(bodyIndex=boxId, jointIndex=1, targetPosition=0.1, controlMode=p.POSITION_CONTROL)
+p.setJointMotorControl2(bodyIndex=boxId, jointIndex=1, targetPosition=x0[1], controlMode=p.POSITION_CONTROL)
 for _ in range(1000):
     p.stepSimulation()
 
@@ -33,7 +38,7 @@ q0 = p.getJointState(boxId, 1)[0]
 
 log = open("log.csv", 'w')
 log.write(f"{t}, {q0}\n")
-while t <= 20:
+while t <= T:
     p.stepSimulation()
     q = p.getJointState(boxId, 1)[0]
     ep = q - qd
@@ -42,12 +47,16 @@ while t <= 20:
     qi += ep*dt
     e_prev = ep
     t+= dt
-   # p.setJointMotorControl2(bodyIndex=boxId, jointIndex=1, controlMode=p.TORQUE_CONTROL, force=f)
+    # p.setJointMotorControl2(bodyIndex=boxId, jointIndex=1, controlMode=p.TORQUE_CONTROL, force=f)
     log.write(f"{t}, {q}, {f}\n")
 
-  #  print(f"JOINT: {q}")
-    #time.sleep(dt)
+    #  print(f"JOINT: {q}")
+    if (RT):
+        time.sleep(dt)
 
 p.disconnect()
 
-exec(open("./pendulum.py").read())
+#exec(open("./pendulum.py").read())
+if (COMPARE):
+    import pendulum
+    pendulum.compare(x0,T)
