@@ -5,7 +5,7 @@ from scipy.integrate import odeint
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 import pandas as pd
-names = ['Time (s)', 'Joint 1', 'Force']
+names = ['Time (s)', 'Joint 1', 'Vel 1', 'Force']
 
 OPTIM = False
 EULER = False
@@ -80,6 +80,8 @@ def compare(x0, T, a = gm, b = w):
 
     plt.plot(log_csv['Time (s)'], log_csv['Joint 1'],label='real')
     plt.legend()
+
+    plt.plot(log_csv['Time (s)'], log_csv['Vel 1'],label='real')
 
     plt.show()
     

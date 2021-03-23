@@ -29,9 +29,9 @@ p.setJointMotorControl2(bodyIndex=boxId, jointIndex=1, targetVelocity=0, control
 
 qi = 0
 t = 0
-kp = -1
-ki = -10
-kd = 0*-4e1
+kp = -10
+ki = -8
+kd = -4
 qd = 1
 e_prev = 0
 
@@ -57,18 +57,18 @@ while t <= T:
     e_prev = ep
     t+= dt
     
-    fd = gm*v + w*math.sin(q)
-    
+    fd = w*math.sin(q)
+
     f = (fd + f)*m*L*L
     p.setJointMotorControl2(bodyIndex=boxId, jointIndex=1, controlMode=p.TORQUE_CONTROL, force=f)
-    log.write(f"{t}, {q}, {f}\n")
+    log.write(f"{t}, {q}, {v}, {f}\n")
 
-    #  print(f"JOINT: {q}")
+    print(f"JOINT: {q}")
     if (RT):
         time.sleep(dt)
 
 p.disconnect()
-
+print(f"JOINT: {q}")
 #exec(open("./pendulum.py").read())
 if (COMPARE):
     import pendulum
