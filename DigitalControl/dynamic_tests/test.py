@@ -2,10 +2,11 @@ import pybullet as p
 import time
 import pybullet_data
 import numpy as np
+import math
 comau_config_path= "./simple.urdf"
 
 dt = 1/240
-x0 = np.array([0, 0.3])
+x0 = np.array([0, 0])
 T = 6
 RT = False
 COMPARE = True
@@ -28,26 +29,38 @@ p.setJointMotorControl2(bodyIndex=boxId, jointIndex=1, targetVelocity=0, control
 
 qi = 0
 t = 0
-kp = -4e4
-ki = -1e4
+kp = -1
+ki = -10
 kd = 0*-4e1
 qd = 1
 e_prev = 0
 
 q0 = p.getJointState(boxId, 1)[0]
+m = 1
+L = 0.8
+k = 1
+g = 10
+
+gm = k/(m*L*L)
+w = g/L
 
 log = open("log.csv", 'w')
 log.write(f"{t}, {q0}\n")
 while t <= T:
     p.stepSimulation()
     q = p.getJointState(boxId, 1)[0]
+    v = p.getJointState(boxId, 1)[1]
     ep = q - qd
     e_diff = (ep - e_prev)/dt
     f = kp*ep + ki*qi + kd*e_diff
     qi += ep*dt
     e_prev = ep
     t+= dt
-    # p.setJointMotorControl2(bodyIndex=boxId, jointIndex=1, controlMode=p.TORQUE_CONTROL, force=f)
+    
+    fd = gm*v + w*math.sin(q)
+    
+    f = (fd + f)*m*L*L
+    p.setJointMotorControl2(bodyIndex=boxId, jointIndex=1, controlMode=p.TORQUE_CONTROL, force=f)
     log.write(f"{t}, {q}, {f}\n")
 
     #  print(f"JOINT: {q}")

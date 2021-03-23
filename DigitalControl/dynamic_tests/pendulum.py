@@ -8,7 +8,7 @@ import pandas as pd
 names = ['Time (s)', 'Joint 1', 'Force']
 
 OPTIM = False
-EULER = True
+EULER = False
 
 m = 1
 L = 0.8
@@ -33,7 +33,7 @@ t = 0
 def rp(in_, t, a, b):
     v = in_[0]
     x = in_[1]
-    dv = -a*v - b*math.sin(x)
+    dv = -a*v - b*math.sin(x) + 0.01/(m*L*L)
     dx = v
     return np.array([dv,dx])
 
