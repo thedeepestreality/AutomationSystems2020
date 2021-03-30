@@ -1,0 +1,38 @@
+<robot name="marker">
+    <material name="black">
+        <color rgba="0 0 0 1"/>
+    </material>
+
+    <link name="world"/>
+
+    <link name="marker">
+        <visual>
+            <geometry>
+                <mesh filename="meshes2/files/arucocube_black.stl" scale="0.00251"/>
+            </geometry>
+            <origin xyz="0 0 0.05" rpy="0 0 0" />
+            <material name="black"/>
+        </visual>
+    </link>
+
+    <joint name="world_to_marker" type="fixed">
+        <parent link="world"/>
+        <child link="marker"/> 
+        <origin xyz="0 0 0" rpy="0 0 0" />    
+    </joint>
+
+    <link name="marker_background">
+        <visual>
+            <geometry>
+                <box size="0.1 0.1 0.1"/>
+            </geometry>
+            <origin xyz="0 0 0.05" rpy="0 0 0" />
+        </visual>
+    </link>
+
+    <joint name="marker_to_bg" type="fixed">
+        <parent link="marker"/>
+        <child link="marker_background"/>     
+    </joint>
+
+</robot>
