@@ -5,7 +5,8 @@ import numpy as np
 import math
 import sys
 from camera import Camera
-from PIL import Image as im
+import cv2
+
 comau_config_path= "./simple.urdf"
 
 dt = 1/240
@@ -37,11 +38,12 @@ def traj(t, q_end):
 
 
 x0 = np.array([0, 0])
-T = 100
-RT = True
+T = 1
+RT = False
 COMPARE = False
 
 physicsClient = p.connect(p.GUI)#or p.DIRECT for non-graphical version
+#physicsClient = p.connect(p.DIRECT)#or p.DIRECT for non-graphical version
 p.setAdditionalSearchPath(pybullet_data.getDataPath()) #optionally
 p.setGravity(0,0,-10)
 planeId = p.loadURDF("plane.urdf")
@@ -54,8 +56,16 @@ p.changeDynamics(boxId, 2, linearDamping=0, angularDamping=0)
 
 camera = Camera()
 data = camera.get_frame()
-img = im.fromarray(data, 'RGBA')            
-img.save('my.png')
+# print(f"im shape: {type(data[0,0,0])}")
+im_np = np.asarray(data[:,:,[2,1,0]])
+# #blank_image = 100*np.ones((300,300,3), np.uint8)
+marker_size = 200
+dictionary = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_50)
+marker_image = cv2.aruco.drawMarker(dictionary, 0, marker_size)
+cv2.imshow('test',marker_image)
+
+cv2.waitKey(0) 
+cv2.destroyAllWindows()
 
 p.setJointMotorControl2(bodyIndex=boxId, jointIndex=1, targetPosition=x0[1], controlMode=p.POSITION_CONTROL)
 for _ in range(1000):

@@ -18,7 +18,7 @@ class Camera:
         self.size = size
         self.viewMatrix = pb.computeViewMatrix(
             cameraEyePosition=[1, 0, height],
-            cameraTargetPosition=[1, 0, 1],
+            cameraTargetPosition=[1, 0, 0.1],
             cameraUpVector=[0, 1, 0])
         self.projectionMatrix = pb.computeProjectionMatrixFOV(
             fov=60.0,
