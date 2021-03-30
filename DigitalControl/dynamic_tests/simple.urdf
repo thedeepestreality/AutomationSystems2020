@@ -91,4 +91,37 @@
         <child link="link_eef"/>     
         <origin xyz="0 0 0.8" rpy="0 0 0"/>
     </joint>
+
+    <link name="code">
+        <visual>
+            <geometry>
+                <mesh filename="meshes2/files/alternative_white.stl" scale="0.00251"/>
+            </geometry>
+            <origin xyz="0 0 0.05" rpy="0 0 0" />
+        </visual>
+    </link>
+
+    
+
+    <joint name="box_w" type="fixed">
+        <parent link="world"/>
+        <child link="code"/> 
+        <origin xyz="1 0 0" rpy="0 0 0" />    
+    </joint>
+
+    <link name="code_bg">
+        <visual>
+            <geometry>
+                <box size="0.1 0.1 0.1"/>
+            </geometry>
+            <origin xyz="0 0 0.05" rpy="0 0 0" />
+        </visual>
+        
+    </link>
+
+    <joint name="box_bg" type="fixed">
+        <parent link="code"/>
+        <child link="code_bg"/>     
+    </joint>
+
 </robot>

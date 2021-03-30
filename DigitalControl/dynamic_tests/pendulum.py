@@ -5,7 +5,7 @@ from scipy.integrate import odeint
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 import pandas as pd
-names = ['Time (s)', 'Joint 1', 'Vel 1', 'Force']
+names = ['Time (s)', 'Joint 1', 'Vel 1', 'Force', 'Target', 'Tar Vel']
 
 OPTIM = False
 EULER = False
@@ -67,7 +67,8 @@ def compare(x0, T, a = gm, b = w):
     else:
         xx = odeint(rp,x0,TT,args=(gm,w))
 
-    plt.plot(TT,xx[:,1],label='model')
+    # plt.plot(TT,xx[:,1],label='model')
+    # plt.grid()
     plt.grid()
 
     log_csv = pd.read_csv('log.csv', header=None, names=names)
@@ -78,10 +79,15 @@ def compare(x0, T, a = gm, b = w):
     print(f"L2: {l2}")
     print(f"L_inf: {linf}")
 
-    plt.plot(log_csv['Time (s)'], log_csv['Joint 1'],label='real')
-    plt.legend()
+    plt.plot(log_csv['Time (s)'], log_csv['Joint 1'],label='joint')
 
-    plt.plot(log_csv['Time (s)'], log_csv['Vel 1'],label='real')
+    plt.plot(log_csv['Time (s)'], log_csv['Vel 1'],label='vel')
+
+    plt.plot(log_csv['Time (s)'], log_csv['Target'],label='Target')
+
+    plt.plot(log_csv['Time (s)'], log_csv['Tar Vel'],label='Tar Vel')
+
+    plt.legend()
 
     plt.show()
     
