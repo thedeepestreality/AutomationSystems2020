@@ -36,7 +36,6 @@ def traj(t, q_end):
         # Or you can apend q to some list
         # and return list at the end
 
-
 x0 = np.array([0, 0])
 T = 1
 RT = False
@@ -56,13 +55,19 @@ p.changeDynamics(boxId, 2, linearDamping=0, angularDamping=0)
 
 camera = Camera()
 data = camera.get_frame()
-# print(f"im shape: {type(data[0,0,0])}")
-im_np = np.asarray(data[:,:,[2,1,0]])
-# #blank_image = 100*np.ones((300,300,3), np.uint8)
-marker_size = 200
+img = cv2.UMat(np.asarray(data[:,:,[2,1,0]]))
 dictionary = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_50)
-marker_image = cv2.aruco.drawMarker(dictionary, 0, marker_size)
-cv2.imshow('test',marker_image)
+parameters = cv2.aruco.DetectorParameters_create()
+
+corners, markerIds, rejectedCandidates = cv2.aruco.detectMarkers(img, dictionary, parameters=parameters)
+cv2.aruco.drawDetectedMarkers(img, corners, markerIds)
+
+# markerLength = 1
+# distCoeffs = np.zeros([0,0,0,0])
+# cameraMatrix = np.array([[1,0,100],[0,1,100],[0,0,1]])
+#rvecs, tvecs, _objPoints = cv2.aruco.estimatePoseSingleMarkers(	corners, markerLength, cameraMatrix, distCoeffs)
+
+cv2.imshow('test', img)
 
 cv2.waitKey(0) 
 cv2.destroyAllWindows()

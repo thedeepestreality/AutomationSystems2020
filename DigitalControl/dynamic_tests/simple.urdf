@@ -95,7 +95,7 @@
     <link name="code">
         <visual>
             <geometry>
-                <mesh filename="meshes2/files/alternative_white.stl" scale="0.00251"/>
+                <mesh filename="meshes2/files/arucocube_black.stl" scale="0.00251"/>
             </geometry>
             <origin xyz="0 0 0.05" rpy="0 0 0" />
         </visual>
