@@ -8,9 +8,9 @@
     <link name="marker">
         <visual>
             <geometry>
-                <mesh filename="meshes2/files/arucocube_black.stl" scale="0.00251"/>
+                <mesh filename="meshes2/files/arucocube_black.stl" scale="0.0051"/>
             </geometry>
-            <origin xyz="0 0 0.05" rpy="0 0 0" />
+            <origin xyz="0 0 0.1" rpy="0 0 0" />
             <material name="black"/>
         </visual>
     </link>
@@ -18,15 +18,15 @@
     <joint name="world_to_marker" type="fixed">
         <parent link="world"/>
         <child link="marker"/> 
-        <origin xyz="0 0 0" rpy="0 0 0" />    
+        <origin xyz="0.1 0.1 0" rpy="0 0 0" />    
     </joint>
 
     <link name="marker_background">
         <visual>
             <geometry>
-                <box size="0.1 0.1 0.1"/>
+                <box size="0.22 0.22 0.2"/>
             </geometry>
-            <origin xyz="0 0 0.05" rpy="0 0 0" />
+            <origin xyz="0 0 0.1" rpy="0 0 0" />
         </visual>
     </link>
 

@@ -5,11 +5,11 @@ class Camera:
     QUALITY = 80
 
     default_size = {
-        'width': 800,
-        'height': 800
+        'width': 1000,
+        'height': 1000
     }
 
-    def __init__(self, size=None, height=0.5):
+    def __init__(self, size=None, height=0.5, fov = 60):
         if size is None:
             size = Camera.default_size
         self.size = size
@@ -18,7 +18,7 @@ class Camera:
             cameraTargetPosition=[0, 0, 0],
             cameraUpVector=[0, 1, 0])
         self.projectionMatrix = pb.computeProjectionMatrixFOV(
-            fov=60.0,
+            fov=fov,
             aspect=1.0,
             nearVal=0.1,
             farVal=100)
