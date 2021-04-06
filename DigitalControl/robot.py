@@ -6,6 +6,9 @@ import modern_robotics as mr
 import numpy as np
 from collections.abc import Iterable
 from dtos import *
+from dynamic_tests.camera import Camera
+import cv2
+import math
 
 URDF_PATH = "robot.urdf"
 PRINT_JOINTS = True
@@ -14,6 +17,12 @@ physicsClient = p.connect(p.GUI)
 p.setAdditionalSearchPath(pybullet_data.getDataPath())
 p.setGravity(0,0,-10)
 plane_id = p.loadURDF("plane.urdf")
+
+fov = 126.8
+sz = {
+    'width': 1000,
+    'height': 1000
+}
 
 class NoSuchControlType(KeyError):
     pass
@@ -38,6 +47,9 @@ class Robot:
         self.motion_types = {}
         self.previous_step_velocity = self.get_joints_velocity()
         self.eef_link_idx = 7
+
+        self.camera = Camera(size=sz, fov=fov, cameraTargetPosition=[3,0,0.5], cameraEyePosition=[2.5,0,0.5])
+
         self.set_position_control([0,0,1.57,0,1.57,0])
         for i in range(100):
             p.stepSimulation()
@@ -223,9 +235,45 @@ class Robot:
             self.trajectory = trajectory
     
     def process_control(self):
-        next_position = next(self.trajectory, None)
-        if next_position is not None:
-            self.set_position_control(next_position)
+        marker_pos = p.getJointState(self.robot_id, jointIndex = 8)[0]
+        p.setJointMotorControl2(bodyIndex=self.robot_id, 
+                                jointIndex=8, 
+                                targetPosition=marker_pos+0.05, 
+                                controlMode=p.POSITION_CONTROL)
+
+        marker_estim = -self.process_image()[1]
+        link_state = p.getLinkState(self.robot_id, linkIndex=self.eef_link_idx)
+        new_pos = (link_state[0][0], link_state[0][1], link_state[0][2]+marker_estim)
+        joints = self.get_inverse_kinematics(new_pos, link_state[1])
+        joints = joints[0:6]
+        self.set_position_control(joints)
+        # next_position = next(self.trajectory, None)
+        # if next_position is not None:
+        #     self.set_position_control(next_position)
+        
+
+    def process_image(self):
+        data = robot.camera.get_frame()
+        # RGB -> BGR UMat for opencv
+        img = np.asarray(data[:,:,[2,1,0]], dtype=np.uint8)
+        dictionary = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_50)
+        parameters = cv2.aruco.DetectorParameters_create()
+
+        corners, markerIds, rejectedCandidates = cv2.aruco.detectMarkers(img, dictionary, parameters=parameters)
+
+        img = cv2.UMat(img)
+        cv2.aruco.drawDetectedMarkers(img, corners, markerIds)
+
+        focal_length = 1/math.tan(math.radians(fov)/2)
+        focal_length = sz['height']/4
+        markerLength = 3*0.2/4
+        distCoeffs = np.zeros([0,0,0,0])
+        cameraMatrix = np.array([[focal_length, 0, sz['width']/2],
+                                [0, focal_length, sz['height']/2],
+                                [0, 0, 1]])
+        rvecs, tvecs, _objPoints = cv2.aruco.estimatePoseSingleMarkers(	corners, markerLength, cameraMatrix, distCoeffs)
+        print(tvecs[0,0,:])
+        return tvecs[0,0,:]
 
     def log_state(self):
         data = (
@@ -239,6 +287,7 @@ class Robot:
     def step(self):
         self.log_state()
         self.previous_step_velocity = self.get_joints_velocity()
+       # self.process_image()
         self.process_control()
         p.stepSimulation()
         self.t += self.dt
@@ -354,6 +403,9 @@ if __name__ == "__main__":
     eul = rot2eul(rot)
     print(f"EUL: {eul}")
 
+    # njoints = p.getNumJoints(robot.robot_id)
+    # for idx in range (njoints):
+    #     print(f'{idx}: {p.getJointInfo(robot.robot_id,idx)[1]}')
     # robot.set_control("cubic", ts=3, target=np.array([1., 1.]))
     while True:
         robot.step()

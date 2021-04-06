@@ -52,6 +52,11 @@
             <origin xyz="0 0 0.4" rpy="0 0 0" />
             <material name="light gray"/>
         </visual>
+        <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <mass value="5"/>
+            <inertia ixx="1"  ixy="0"  ixz="0" iyy="1" iyz="0" izz="0" />
+        </inertial>
     </link>
 
     <link name="link_3"/>
@@ -86,6 +91,11 @@
             <origin xyz="0 0 0.05" rpy="0 0 0" />
             <material name="black"/>
         </visual>
+        <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <mass value="0"/>
+            <inertia ixx="0"  ixy="0"  ixz="0" iyy="0" iyz="0" izz="0" />
+        </inertial>
     </link>
 
     <joint name="world_to_base" type="fixed">
@@ -147,4 +157,46 @@
         <child link="link_eef"/>     
         <origin xyz="0 0 0.2" rpy="0 0 0"/>
     </joint>
+
+    <!-- MARKER -->
+
+    <link name="marker_base"/>
+
+    <joint name="world_to_marker_base" type="prismatic">
+        <parent link="world"/>
+        <child link="marker_base"/>    
+        <origin xyz="3 0 0.5" rpy="0 -1.5708 0" />
+        <limit lower="-1" upper="1" velocity="1"/>
+    </joint>
+ 
+    <link name="marker">
+        <visual>
+            <geometry>
+                <mesh filename="dynamic_tests/meshes2/files/arucocube_black.stl" scale="0.0051"/>
+            </geometry>
+            <origin xyz="0 0 0.1" rpy="0 0 0" />
+            <material name="black"/>
+        </visual>
+    </link>
+
+    <joint name="base_to_marker" type="fixed">
+        <parent link="marker_base"/>
+        <child link="marker"/> 
+        <origin xyz="0 0 0" rpy="0 0 0" />    
+    </joint>
+
+    <link name="marker_background">
+        <visual>
+            <geometry>
+                <box size="0.22 0.22 0.2"/>
+            </geometry>
+            <origin xyz="0 0 0.1" rpy="0 0 0" />
+        </visual>
+    </link>
+
+    <joint name="marker_to_bg" type="fixed">
+        <parent link="marker"/>
+        <child link="marker_background"/>     
+    </joint>
+
 </robot>

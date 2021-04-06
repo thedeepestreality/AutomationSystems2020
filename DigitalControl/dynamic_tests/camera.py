@@ -9,14 +9,14 @@ class Camera:
         'height': 1000
     }
 
-    def __init__(self, size=None, height=0.5, fov = 60):
+    def __init__(self, size=None, cameraEyePosition=[0, 0, 0.5], fov = 60, cameraTargetPosition=[0, 0.5, 0.5]):
         if size is None:
             size = Camera.default_size
         self.size = size
         self.viewMatrix = pb.computeViewMatrix(
-            cameraEyePosition=[0, 0, height],
-            cameraTargetPosition=[0, 0, 0],
-            cameraUpVector=[0, 1, 0])
+            cameraEyePosition=cameraEyePosition,
+            cameraTargetPosition = cameraTargetPosition,
+            cameraUpVector=[0, 0, 1])
         self.projectionMatrix = pb.computeProjectionMatrixFOV(
             fov=fov,
             aspect=1.0,
