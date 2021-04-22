@@ -254,6 +254,8 @@ class Robot:
 
     def process_image(self):
         data = robot.camera.get_frame()
+        data = np.array(data)
+        data = np.reshape(data, (1000, 1000, 4))
         # RGB -> BGR UMat for opencv
         img = np.asarray(data[:,:,[2,1,0]], dtype=np.uint8)
         dictionary = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_50)
@@ -272,7 +274,7 @@ class Robot:
                                 [0, focal_length, sz['height']/2],
                                 [0, 0, 1]])
         rvecs, tvecs, _objPoints = cv2.aruco.estimatePoseSingleMarkers(	corners, markerLength, cameraMatrix, distCoeffs)
-        print(tvecs[0,0,:])
+        #print(tvecs[0,0,:])
         return tvecs[0,0,:]
 
     def log_state(self):
