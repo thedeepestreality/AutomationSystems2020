@@ -235,27 +235,27 @@ class Robot:
             self.trajectory = trajectory
     
     def process_control(self):
-        marker_pos = p.getJointState(self.robot_id, jointIndex = 8)[0]
-        p.setJointMotorControl2(bodyIndex=self.robot_id, 
-                                jointIndex=8, 
-                                targetPosition=marker_pos+0.05, 
-                                controlMode=p.POSITION_CONTROL)
+        # marker_pos = p.getJointState(self.robot_id, jointIndex = 8)[0]
+        # p.setJointMotorControl2(bodyIndex=self.robot_id, 
+        #                         jointIndex=8, 
+        #                         targetPosition=marker_pos+0.05, 
+        #                         controlMode=p.POSITION_CONTROL)
 
-        marker_estim = -self.process_image()[1]
-        link_state = p.getLinkState(self.robot_id, linkIndex=self.eef_link_idx)
-        new_pos = (link_state[0][0], link_state[0][1], link_state[0][2]+marker_estim)
-        joints = self.get_inverse_kinematics(new_pos, link_state[1])
-        joints = joints[0:6]
-        self.set_position_control(joints)
-        # next_position = next(self.trajectory, None)
-        # if next_position is not None:
-        #     self.set_position_control(next_position)
+        # marker_estim = -self.process_image()[1]
+        # link_state = p.getLinkState(self.robot_id, linkIndex=self.eef_link_idx)
+        # new_pos = (link_state[0][0], link_state[0][1], link_state[0][2]+marker_estim)
+        # joints = self.get_inverse_kinematics(new_pos, link_state[1])
+        # joints = joints[0:6]
+        # self.set_position_control(joints)
+        next_position = next(self.trajectory, None)
+        if next_position is not None:
+            self.set_position_control(next_position)
         
 
     def process_image(self):
         data = robot.camera.get_frame()
         data = np.array(data)
-        data = np.reshape(data, (1000, 1000, 4))
+        data = np.reshape(data, (sz['height'], sz['width'], 4))
         # RGB -> BGR UMat for opencv
         img = np.asarray(data[:,:,[2,1,0]], dtype=np.uint8)
         dictionary = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_50)
@@ -274,7 +274,7 @@ class Robot:
                                 [0, focal_length, sz['height']/2],
                                 [0, 0, 1]])
         rvecs, tvecs, _objPoints = cv2.aruco.estimatePoseSingleMarkers(	corners, markerLength, cameraMatrix, distCoeffs)
-        #print(tvecs[0,0,:])
+        print(tvecs[0,0,:])
         return tvecs[0,0,:]
 
     def log_state(self):
@@ -289,7 +289,7 @@ class Robot:
     def step(self):
         self.log_state()
         self.previous_step_velocity = self.get_joints_velocity()
-       # self.process_image()
+        # self.process_image()
         self.process_control()
         p.stepSimulation()
         self.t += self.dt
@@ -313,6 +313,33 @@ def p2p_cubic(robot, q_end, ts):
         yield q
         # Or you can apend q to some list
         # and return list at the end
+
+
+def p2p_five(robot, q_end, ts):
+    q_start = robot.get_joints_position()
+    a0 = q_start
+    a1 = q_start * 0
+    a2 = q_start * 0
+    a3 = (
+        1/2/(ts**3) *
+        (20 * (q_end - q_start))
+    )
+    a4 = (
+        1/2/(ts**4) *
+        (30 * (q_start - q_end))
+    )
+    a5 = (
+        1/2/(ts**5) *
+        (12 * (q_end - q_start))
+    )
+
+    t = 0
+
+    while t < ts:
+        t += robot.dt
+        q = a0 + a3*t**3 + a4*t**4 + a5*t**5
+        yield q
+
 
 def p2p_cart_cubic_screw(robot, T_end, ts):
     T_start = robot.get_homogeneous()
@@ -392,6 +419,8 @@ def traj_segment_cubic(robot, q_end, vel_end, ts):
 
 robot = Robot()
 robot.add_scaling_mode('cubic', p2p_cubic)
+robot.add_scaling_mode('five', p2p_five)
+
 robot.add_interpolation_mode('cubic', traj_segment_cubic)
 
 robot.add_motion_type('screw', p2p_cart_cubic_screw)
