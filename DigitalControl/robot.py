@@ -340,6 +340,39 @@ def p2p_five(robot, q_end, ts):
         q = a0 + a3*t**3 + a4*t**4 + a5*t**5
         yield q
 
+def p2p_trapezoid(robot, q_end, ts):
+    q_start = robot.get_joints_position()
+    # !!! ---------------- !!!
+    # t_acc = 1/3 * ts
+    #v = 0.4
+    a = 1
+    if a*ts**2 - 4 < 0:
+        print("Error: can't reach target in time")
+        return
+    v = 1/2 * (a*ts - np.sqrt(a) * np.sqrt(a*ts**2 - 4))
+    #assert v**2 / a <= 1
+
+    t = 0
+
+    va = v / a
+
+    while t < va:
+        t += robot.dt
+        s = 1/2 * a * t**2
+        q = q_start + s * (q_end-q_start)
+        yield q
+
+    while t < ts - va:
+        t += robot.dt
+        s = (v*t) - ( v**2 / (2*a) )
+        q = q_start + s * (q_end-q_start)
+        yield q
+
+    while t < ts:
+        t += robot.dt
+        s = (2*a*v*ts - 2*(v**2) - (a**2) * (t - ts)**2) / (2*a)
+        q = q_start + s * (q_end-q_start)
+        yield q
 
 def p2p_cart_cubic_screw(robot, T_end, ts):
     T_start = robot.get_homogeneous()
@@ -420,6 +453,7 @@ def traj_segment_cubic(robot, q_end, vel_end, ts):
 robot = Robot()
 robot.add_scaling_mode('cubic', p2p_cubic)
 robot.add_scaling_mode('five', p2p_five)
+robot.add_scaling_mode('trapezoid', p2p_trapezoid)
 
 robot.add_interpolation_mode('cubic', traj_segment_cubic)
 
